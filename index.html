@@ -16,7 +16,10 @@ a{color:#7427E2}a:hover{color:#150A56}
 .pm-page{--pm-ink:#150A56;--pm-ink-2:#2A1E6E;--pm-ink-3:#5A4F8E;--pm-ink-4:#8A82B0;--pm-violet:#7427E2;--pm-line:#DCD4EE;--font-display:"Poppins",system-ui,sans-serif;--font-sans:"Poppins",system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;--page-pad:72px;
   width:816px;height:1000px;flex:0 0 auto;box-sizing:border-box;position:relative;overflow:hidden;display:flex;flex-direction:column;background:#FFFFFF;color:var(--pm-ink);font-family:var(--font-sans);-webkit-font-smoothing:antialiased}
 .quiz-page{background:radial-gradient(circle at 0% 0%, rgba(232,112,209,.06), transparent 50%),radial-gradient(circle at 100% 100%, rgba(116,39,226,.08), transparent 55%),#FFFFFF}
-.book{width:816px;margin:0 auto;display:flex;flex-direction:column;gap:36px}
+.book-fit{width:816px;margin:0 auto;position:relative;overflow:hidden}
+html,body{overflow-x:hidden}
+.book{width:816px;display:flex;flex-direction:column;gap:36px;transform-origin:top left}
+.pm-page,.pm-page *{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .pm-page{border-radius:6px;box-shadow:0 1px 2px rgba(21,10,86,.05),0 18px 56px rgba(21,10,86,.16),0 8px 18px rgba(21,10,86,.08);scroll-margin-top:24px}
 .quiz-result[hidden],.quiz-reset[hidden]{display:none}
 .pm-page *,.pm-page *::before,.pm-page *::after{box-sizing:border-box}
@@ -94,6 +97,7 @@ a{color:#7427E2}a:hover{color:#150A56}
 </style>
 </head>
 <body>
+<div class="book-fit">
 <div class="book">
 <section class="pm-page quiz-page" id="quiz">
   <div class="pixel-grid-q" aria-hidden="true"></div>
@@ -321,6 +325,7 @@ a{color:#7427E2}a:hover{color:#150A56}
   </div>
 </section>
 </div>
+</div>
 <script>
 (function () {
   var page = document.getElementById('quiz');
@@ -423,15 +428,30 @@ a{color:#7427E2}a:hover{color:#150A56}
     update();
   });
 
-  // Fit the fixed 816px pages on narrow screens
+  // Fit the fixed 816px pages on narrow screens.
+  // transform: scale() is used (not zoom) because iOS Safari re-flows and
+  // re-inflates text under zoom; the wrapper is sized to the scaled box so
+  // no empty space is left below or beside the pages.
   var book = document.querySelector('.book');
+  var wrap = document.querySelector('.book-fit');
   function fit() {
     var avail = document.documentElement.clientWidth - 32;
-    book.style.zoom = avail < 816 ? String(avail / 816) : '';
+    var s = Math.min(1, avail / 816);
+    if (s < 1) {
+      book.style.transform = 'scale(' + s + ')';
+      wrap.style.width = (816 * s) + 'px';
+      wrap.style.height = (book.offsetHeight * s) + 'px';
+    } else {
+      book.style.transform = '';
+      wrap.style.width = '';
+      wrap.style.height = '';
+    }
   }
   fit();
   window.addEventListener('resize', fit);
-})(); 
+  window.addEventListener('orientationchange', fit);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+})();
 </script>
 </body>
 </html>
